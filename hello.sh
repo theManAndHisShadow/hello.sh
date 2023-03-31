@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# import top_commands 
+. scripts/top_commands.sh
+
 # print color styled text
 printf "
    \033[31m__ __\033[33m____\033[32m__   \033[36m__   \033[35m____    \033[37m______ __
@@ -9,3 +12,4 @@ printf "
 
 printf "\033[31m----\033[33m-----\033[32m-----\033[36m-----\033[35m------\033[34m---\033[37m--------\n"
 
+echo "$(top_commands)"
