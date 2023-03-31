@@ -32,6 +32,25 @@ function get_cpu_info() {
 
 
 
+function get_ram_size() {
+    local os_name=$(uname -s)
+    local system_ram=0
+
+    if [[ "$os_name" == "Linux" || "$os_name" == "FreeBSD" || "$os_name" == "OpenBSD" || "$os_name" == "NetBSD" ]]; then
+        system_ram=$(free -b | awk '/^Mem:/ {print $2}')
+    elif [[ "$os_name" == "Darwin" ]]; then
+        system_ram=$(sysctl -n hw.memsize)
+    fi
+
+    if [[ "$system_ram" -gt 0 ]]; then
+        system_ram=$(echo "scale=2; $system_ram / 1024^3" | bc -l)
+    fi
+
+    echo "$system_ram"
+}
+
+
+
 function root_disk_info() {
     root_partition=$(df / | awk '{print $1}')
     disk_name=$(df / | awk 'NR==2{print $1}')
@@ -76,8 +95,7 @@ function show_sys_info {
     kernel_version=$(uname -r)
 
     # RAM info
-    system_ram=$(sysctl -n hw.memsize)
-    system_ram_capacity=$(echo "scale=2; $system_ram/1024/1024/1024" | bc)
+    system_ram_capacity=$(get_ram_size)
 
     # Print system info
     echo -e "${bold}\033[38;5;27m OS:\033[0m ${normal}$os_name"
