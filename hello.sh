@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # import top_commands 
+. scripts/show_sys_info.sh
 . scripts/top_commands.sh
 
 # print color styled text
@@ -12,4 +13,5 @@ printf "
 
 printf "\033[31m----\033[33m-----\033[32m-----\033[36m-----\033[35m------\033[34m---\033[37m--------\n"
 
+echo "$(show_sys_info)"
 echo "$(top_commands)"
