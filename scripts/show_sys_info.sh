@@ -64,8 +64,7 @@ function root_disk_info() {
 
 function get_os_name() {
     local os_name=$(uname -s)
-    local code_name= "empty"
-    
+
     if [[ "$os_name" == "Linux" ]]; then
         local code_name=$(lsb_release -cs)
         os_name=$(lsb_release -is)" "$(lsb_release -rs)" ("${code_name^}")"
@@ -80,9 +79,14 @@ function get_os_name() {
             # add more versions here if needed
         esac
         os_name+=")"
+    elif echo "$os_name" | grep -q "^MINGW64_NT"; then
+        os_name=$(systeminfo | grep "^OS Name" | awk -F': +' '{print $2}')
+        os_name=${os_name/Pro/(Pro)}
     fi
     echo "$os_name"
 }
+
+
 
 
 
