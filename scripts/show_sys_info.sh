@@ -1,13 +1,24 @@
 #!/bin/bash
 
 
+# Important note: 
+# This code has been tested on macOS Big Sur, Windows 11, and Ubuntu 20.10 with kernel version 5. 
+# To ensure proper functionality of the script, Bash version 3.2 or higher is required.
+# Also note that to run the script on Windows, Cygwin (or Mingw64) is required, 
+# and all non-existent POSIX calls are replaced with Windows analogs. 
+# Additionally, it should be noted that in the future, the functionality for Windows 
+# will be completely transferred to native command calls for Windows...maybe :)
 
+
+# This function gets information about the CPU
+# It takes no arguments
 function get_cpu_info() {
     local os_name=$(uname -s)
     local processor_name="Unknown"
     local core_count="Unknown"
     local thread_count="Unknown"
 
+    # Check the operating system to determine the command to use for getting CPU information
     if [[ "$os_name" == "Linux" ]]; then
         processor_name=$(grep 'model name' /proc/cpuinfo | head -n1 | cut -d ':' -f2 | sed 's/^ *//')
         core_count=$(grep 'cpu cores' /proc/cpuinfo | head -n1 | cut -d ':' -f2 | sed 's/^ *//')
@@ -38,10 +49,13 @@ function get_cpu_info() {
 
 
 
+# This function gets information about the RAM size
+# It takes no arguments
 function get_ram_size() {
     local os_name=$(uname -s)
     local system_ram=0
 
+    # Check the operating system type and use appropriate command to get system RAM size
     if [[ "$os_name" == "Linux" || "$os_name" == "FreeBSD" || "$os_name" == "OpenBSD" || "$os_name" == "NetBSD" ]]; then
         system_ram=$(free -b | awk '/^Mem:/ {print $2}')
     elif [[ "$os_name" == "Darwin" ]]; then
@@ -51,8 +65,10 @@ function get_ram_size() {
         system_ram=$(echo "$system_ram / 1" | bc -l 2>/dev/null || echo "$system_ram")
     fi
 
+    # Convert bytes to GB
     system_ram=$((system_ram / 1024 / 1024 / 1024))
 
+    # Print the RAM size only if it's greater than 0
     if [[ "$system_ram" -gt 0 ]]; then
         printf '%.2f\n' "$system_ram"
     fi
@@ -60,29 +76,41 @@ function get_ram_size() {
 
 
 
+# This function retrieves the drive letter of the system disk on Windows
+# It takes no arguments
 function get_win_sys_disk_letter() {
+    # Check if the system disk is mounted at root "/"
     system_drive=$(mount | awk '$2 == "/" {print substr($1, 1, 1)}' | tr '[:lower:]' '[:upper:]')
+
+    # If the system disk is not mounted at root, use "wmic" command to get the drive letter
     if [[ -z "$system_drive" ]]; then
         system_drive=$(wmic logicaldisk where drivetype=3 get deviceid | awk 'NR>1{print $1}' | tr '[:lower:]' '[:upper:]')
     fi
 
+    # Return the drive letter of the system disk
     echo "$system_drive:"
 }
 
 
 
+# This function gets information about:
+# for windows name of systme drive, free space, total size
+# for unix-lie name of root device, free space, total size
+# It takes no arguments
 function root_disk_info() {
     local os_name=$(uname -s)
     local disk_name=""
     local disk_free_space=""
     local disk_total_space=""
 
+    # Check if the OS is Windows
     if [[ "$os_name" == CYGWIN* || "$os_name" == MINGW64_NT* ]]; then
         root_partition=$get_win_sys_disk_letter
         disk_info=$(wmic logicaldisk where drivetype=3 get deviceid, size, freespace | awk 'NR>1')
         disk_name=$(echo "$disk_info" | awk -v partition="$root_partition" '$0 ~ partition {print $1}')
         disk_free_space=$(echo "$disk_info" | awk -v partition="$root_partition" '$0 ~ partition { printf "%.1f", $2/1024/1024/1024 }')
         disk_total_space=$(echo "$disk_info" | awk -v partition="$root_partition" '$0 ~ partition { printf "%.1f", $3/1024/1024/1024 }')
+    # Check if the OS is Unix-like (including macOS)
     elif [[ "$os_name" == Darwin || "$os_name" == Linux || "$os_name" == FreeBSD || "$os_name" == OpenBSD || "$os_name" == NetBSD ]]; then
         root_partition="/"
         disk_info=$(df -h $root_partition)
@@ -96,6 +124,8 @@ function root_disk_info() {
 
 
 
+# This function gets information about operation system name
+# It takes no arguments
 function get_os_name() {
     local os_name=$(uname -s)
 
@@ -122,6 +152,8 @@ function get_os_name() {
 
 
 
+# This function gets information about kernel name and kernel version
+# It takes no arguments
 function get_kernel_info() {
     local os_name=$(uname -s)
     kernel_info="Unknown kernel"
@@ -147,6 +179,9 @@ function get_kernel_info() {
 
 
 
+# Main function!
+# This function gets information about user system
+# It takes no arguments
 function show_sys_info {
     # OS info
     os_name=$(get_os_name)
