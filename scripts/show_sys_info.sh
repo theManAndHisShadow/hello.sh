@@ -76,7 +76,7 @@ function get_ram_size() {
 
 
 
-# This function retrieves the drive letter of the system disk on Windows
+# This function retrieves infromation about GPU
 # It takes no arguments
 function get_gpu_info() {
     local gpu_info='Unknown GPU'
@@ -85,19 +85,21 @@ function get_gpu_info() {
     case "$os" in
     CYGWIN* | MINGW64_NT*)
         gpu_name=$(wmic path win32_VideoController get Name | sed -n '2{s/^[[:blank:]]*//;s/[[:blank:]]*$//;p;q}')
-        gpu_memory=$(wmic path win32_VideoController get AdapterRAM | sed -n '2{s/^[[:blank:]]*//;s/[[:blank:]]*$//;p;q}' | awk '{print $1 / 1024 / 1024 / 1024;}')
+        gpu_memory=$(wmic path win32_VideoController get AdapterRAM | sed -n '2{s/^[[:blank:]]*//;s/[[:blank:]]*$//;p;q}' | awk '{print $1 / 1024 / 1024;}')
         ;;
     Darwin*)
         gpu_name=$(system_profiler SPDisplaysDataType | awk -F': ' '/^ +Chipset Model:/ { print $2 }')
-        gpu_memory=$(system_profiler SPDisplaysDataType | awk -F': ' '/^ +VRAM \(Total\):/ { print $2 }' | awk '{print $1}')
+        gpu_memory=$(system_profiler SPDisplaysDataType | awk -F': ' '/^ +VRAM \(Total\):/ { print $2 }' | awk '{print $1 * 1024}')
         ;;
     Linux* | GNU*)
-        gpu_name=$(lspci -vnnn | awk -F': ' '/^VGA compatible controller:/ { print $3 }')
-        gpu_memory=$(grep 'MemTotal' /proc/meminfo | awk '{ printf("%.0f", $2/1024/1024) }')
+        gpu_name=$(lspci | grep 'VGA' | cut -d ':' -f 3- | sed -e 's/ (rev [[:digit:]]\+)//' | sed -e 's/([a-zA-Z]\+ Lake)//')
+
+        # Извлекаем размер видеопамяти из строки
+        gpu_memory=$(lspci -v | grep -A 10 -i "VGA.*graphics" | grep -i "Memory" | grep " prefetchable" | grep -oP "size=\K\d+")
         ;;
     *BSD)
         gpu_name=$(pciconf -lv | grep -B3 'VGA.*compatible' | awk -F': ' '/^ +device =/ { print $2 }' | head -n 1)
-        gpu_memory=$(dmesg | grep -i 'memory.*mb' | awk '{ printf("%.0f", $4/1024) }')
+        gpu_memory=$(dmesg | grep -i 'memory.*mb' | awk '{ printf("%.0f", $4) }')
         ;;
     *)
         echo "Unsupported operating system: $os"
@@ -108,7 +110,16 @@ function get_gpu_info() {
         echo "Failed to get GPU name"
         return 1
     fi
-    gpu_info=$(echo "${gpu_name} (${gpu_memory} GB)" | sed 's/[[:blank:]]\{2,\}/ /g')
+
+    size_postfix="MB"
+    if [[ $(echo "$gpu_memory" | awk '{if ($1 >= 1024) print "true"}') == "true" ]]; then
+        gpu_memory=$(echo $gpu_memory | awk '{ print $1 / 1024 }')
+        size_postfix="GB"
+    fi
+    
+
+
+    gpu_info=$(echo "${gpu_name} (${gpu_memory} $size_postfix)" | sed 's/[[:blank:]]\{2,\}/ /g')
 
     echo $gpu_info
 }
