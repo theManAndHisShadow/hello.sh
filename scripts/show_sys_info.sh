@@ -218,7 +218,7 @@ function get_kernel_info() {
         kernel_name=$(uname -s)
         kernel_version=$(uname -r | awk -F '.' '{print $1"."$2}')
     elif echo "$os_name" | grep -q "^MINGW64_NT"; then
-        kernel_name= "Windows_NT"
+        kernel_name= Windows_NT
         kernel_version="$(wmic os get version | grep -v Version)"
     fi
 
