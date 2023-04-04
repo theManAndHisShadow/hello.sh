@@ -78,6 +78,45 @@ function get_ram_size() {
 
 # This function retrieves the drive letter of the system disk on Windows
 # It takes no arguments
+function get_gpu_info() {
+    local gpu_info='Unknown GPU'
+    local os=$(uname -s)
+
+    case "$os" in
+    CYGWIN* | MINGW64_NT*)
+        gpu_name=$(wmic path win32_VideoController get Name | sed -n '2{s/^[[:blank:]]*//;s/[[:blank:]]*$//;p;q}')
+        gpu_memory=$(wmic path win32_VideoController get AdapterRAM | sed -n '2{s/^[[:blank:]]*//;s/[[:blank:]]*$//;p;q}' | awk '{print $1 / 1024 / 1024 / 1024;}')
+        ;;
+    Darwin*)
+        gpu_name=$(system_profiler SPDisplaysDataType | awk -F': ' '/^ +Chipset Model:/ { print $2 }')
+        gpu_memory=$(system_profiler SPDisplaysDataType | awk -F': ' '/^ +VRAM \(Total\):/ { print $2 }' | awk '{print $1}')
+        ;;
+    Linux* | GNU*)
+        gpu_name=$(lspci -vnnn | awk -F': ' '/^VGA compatible controller:/ { print $3 }')
+        gpu_memory=$(grep 'MemTotal' /proc/meminfo | awk '{ printf("%.0f", $2/1024/1024) }')
+        ;;
+    *BSD)
+        gpu_name=$(pciconf -lv | grep -B3 'VGA.*compatible' | awk -F': ' '/^ +device =/ { print $2 }' | head -n 1)
+        gpu_memory=$(dmesg | grep -i 'memory.*mb' | awk '{ printf("%.0f", $4/1024) }')
+        ;;
+    *)
+        echo "Unsupported operating system: $os"
+        return 1
+        ;;
+    esac
+    if [[ -z "$gpu_name" ]]; then
+        echo "Failed to get GPU name"
+        return 1
+    fi
+    gpu_info=$(echo "${gpu_name} (${gpu_memory} GB)" | sed 's/[[:blank:]]\{2,\}/ /g')
+
+    echo $gpu_info
+}
+
+
+
+# This function retrieves the drive letter of the system disk on Windows
+# It takes no arguments
 function get_win_sys_disk_letter() {
     # Check if the system disk is mounted at root "/"
     system_drive=$(mount | awk '$2 == "/" {print substr($1, 1, 1)}' | tr '[:lower:]' '[:upper:]')
@@ -193,7 +232,8 @@ function show_sys_info {
     # Print system info
     echo -e "${bold}\033[38;5;27m OS:\033[0m ${normal}$os_name"
     echo -e "${bold}\033[38;5;27m Kernel:\033[0m ${normal}$kernel_info"
-    echo -e "${bold}\033[38;5;27m CPU:\033[0m ${normal} $(get_cpu_info)"
+    echo -e "${bold}\033[38;5;27m CPU:\033[0m ${normal}$(get_cpu_info)"
+    echo -e "${bold}\033[38;5;27m GPU:\033[0m ${normal}$(get_gpu_info)"
     echo -e "${bold}\033[38;5;27m RAM:\033[0m ${normal}$system_ram_capacity GB"
     echo -e "${bold}\033[38;5;27m Root disk:\033[0m${normal} $(root_disk_info)"
     echo "------------------------------------"
