@@ -11,7 +11,6 @@
 
 
 # This function gets information about the CPU
-# It takes no arguments
 function get_cpu_info() {
     local os_name=$(uname -s)
     local processor_name="Unknown"
@@ -50,7 +49,6 @@ function get_cpu_info() {
 
 
 # This function gets information about the RAM size
-# It takes no arguments
 function get_ram_size() {
     local os_name=$(uname -s)
     local system_ram=0
@@ -77,7 +75,6 @@ function get_ram_size() {
 
 
 # This function retrieves infromation about GPU
-# It takes no arguments
 function get_gpu_info() {
     local gpu_info='Unknown GPU'
     local os=$(uname -s)
@@ -127,7 +124,6 @@ function get_gpu_info() {
 
 
 # This function retrieves the drive letter of the system disk on Windows
-# It takes no arguments
 function get_win_sys_disk_letter() {
     # Check if the system disk is mounted at root "/"
     system_drive=$(mount | awk '$2 == "/" {print substr($1, 1, 1)}' | tr '[:lower:]' '[:upper:]')
@@ -146,7 +142,6 @@ function get_win_sys_disk_letter() {
 # This function gets information about:
 # for windows name of systme drive, free space, total size
 # for unix-lie name of root device, free space, total size
-# It takes no arguments
 function root_disk_info() {
     local os_name=$(uname -s)
     local disk_name=""
@@ -175,7 +170,6 @@ function root_disk_info() {
 
 
 # This function gets information about operation system name
-# It takes no arguments
 function get_os_name() {
     local os_name=$(uname -s)
 
@@ -203,7 +197,6 @@ function get_os_name() {
 
 
 # This function gets information about kernel name and kernel version
-# It takes no arguments
 function get_kernel_info() {
     local os_name=$(uname -s)
     kernel_info="Unknown kernel"
@@ -231,7 +224,6 @@ function get_kernel_info() {
 
 # Main function!
 # This function gets information about user system
-# It takes no arguments
 function show_sys_info {
     # OS info
     os_name=$(get_os_name)
