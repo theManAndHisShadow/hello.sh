@@ -240,12 +240,18 @@ function show_sys_info {
     # RAM info
     system_ram_capacity=$(get_ram_size)
 
+    # Select key word by OS
+    diskKeyName="Root disk"
+    if echo "$os_name" | grep -q "Windows"; then
+        diskKeyName="System disk"
+    fi
+
     # Print system info
     echo -e "${bold}\033[38;5;27m OS:\033[0m ${normal}$os_name"
     echo -e "${bold}\033[38;5;27m Kernel:\033[0m ${normal}$kernel_info"
     echo -e "${bold}\033[38;5;27m CPU:\033[0m ${normal}$(get_cpu_info)"
     echo -e "${bold}\033[38;5;27m GPU:\033[0m ${normal}$(get_gpu_info)"
     echo -e "${bold}\033[38;5;27m RAM:\033[0m ${normal}$system_ram_capacity GB"
-    echo -e "${bold}\033[38;5;27m Root disk:\033[0m${normal} $(root_disk_info)"
+    echo -e "${bold}\033[38;5;27m $diskKeyName:\033[0m${normal} $(root_disk_info)"
     echo "------------------------------------"
 }
